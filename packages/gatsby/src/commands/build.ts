@@ -523,24 +523,7 @@ module.exports = async function build(
 
   // we need to save it again to make sure our latest state has been saved
   await db.saveState()
-
-  if (shouldGenerateEngines()) {
-    // well, tbf we should just generate this in `.cache` and avoid deleting it :shrug:
-    program.keepPageRenderer = true
-  }
-
-  await waitForWorkerPoolRestart
-
-  const { toRegenerate, toDelete } =
-    await buildHTMLPagesAndDeleteStaleArtifacts({
-      program,
-      workerPool,
-      parentSpan: buildSpan,
-    })
-
-  await waitMaterializePageMode
-  const waitWorkerPoolEnd = Promise.all(workerPool.end())
-
+  
   // create scope so we don't leak state object
   {
     const { schema, definitions, config } = store.getState()
@@ -576,6 +559,23 @@ module.exports = async function build(
       typegenActivity.end()
     }
   }
+
+  if (shouldGenerateEngines()) {
+    // well, tbf we should just generate this in `.cache` and avoid deleting it :shrug:
+    program.keepPageRenderer = true
+  }
+
+  await waitForWorkerPoolRestart
+
+  const { toRegenerate, toDelete } =
+    await buildHTMLPagesAndDeleteStaleArtifacts({
+      program,
+      workerPool,
+      parentSpan: buildSpan,
+    })
+
+  await waitMaterializePageMode
+  const waitWorkerPoolEnd = Promise.all(workerPool.end())
 
   {
     let SSGCount = 0
